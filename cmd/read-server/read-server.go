@@ -26,6 +26,12 @@ func main() {
 	if err != nil {
 		log.Panicf("can't create repo: %v", err)
 	}
+	defer func() {
+		err := r.Close()
+		if err != nil {
+			log.Errorf("repo close err: %v", err)
+		}
+	}()
 
 	srv := server.NewServer(r, *maxConnections)
 	srv.RunListener(*serverAddr)

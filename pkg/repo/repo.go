@@ -23,6 +23,15 @@ func NewRepo(filename string) (*Repo, error) {
 	}, nil
 }
 
+func (repo *Repo) Close() error {
+	err := repo.file.Close()
+	if err != nil {
+		return fmt.Errorf("file close err: %v", err)
+	}
+
+	return nil
+}
+
 func (repo *Repo) WriteLine(id int, msg string) error {
 	repo.mu.Lock()
 	_, err := fmt.Fprintf(repo.file, "%v: `%s`\n", id, msg)
