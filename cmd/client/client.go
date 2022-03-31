@@ -7,9 +7,17 @@ import (
 	"os"
 )
 
-var serverAddr = flag.String("s", "localhost:8080", "address of the read-server")
-
 func main() {
+	serverAddr := flag.String("s", "localhost:8080", "address of the read-server")
+	isHelp := flag.Bool("help", false, "show help")
+
+	flag.Parse()
+
+	if *isHelp {
+		flag.PrintDefaults()
+		return
+	}
+
 	c := client.NewClient(os.Stdin)
 	err := c.RunProxy(*serverAddr)
 	if err != nil {

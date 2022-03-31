@@ -7,13 +7,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	serverAddr     = flag.String("s", "localhost:8080", "address of the read-server")
-	filename       = flag.String("file", "file.txt", "file where will be written clients data")
-	maxConnections = flag.Int("max", 5, "max connections to server")
-)
-
 func main() {
+	serverAddr := flag.String("s", "localhost:8080", "address of the read-server")
+	filename := flag.String("file", "file.txt", "file where will be written clients data")
+	maxConnections := flag.Int("max", 5, "max connections to server")
+	isHelp := flag.Bool("help", false, "show help")
+
+	flag.Parse()
+
+	if *isHelp {
+		flag.PrintDefaults()
+		return
+	}
+
 	log.Infof("starting server")
 
 	r, err := repo.NewRepo(*filename)

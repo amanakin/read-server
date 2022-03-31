@@ -36,7 +36,7 @@ func (c *Client) RunProxy(addr string) error {
 
 	c.serverWriter = bufio.NewWriter(conn)
 
-	id, err := c.auth()
+	id, err := c.auth(0)
 	if err != nil {
 		return fmt.Errorf("auth err: %v", err)
 	}
@@ -44,7 +44,7 @@ func (c *Client) RunProxy(addr string) error {
 	return c.serve(id)
 }
 
-func (c *Client) auth() (int, error) {
+func (c *Client) auth(counter int) (int, error) {
 	fmt.Printf("Enter your id\n")
 
 	if !c.clientScanner.Scan() {
@@ -53,7 +53,12 @@ func (c *Client) auth() (int, error) {
 
 	id, err := strconv.Atoi(c.clientScanner.Text())
 	if err != nil {
-		return 0, fmt.Errorf("atoi err: %v", err)
+		if counter > 3 {
+			fmt.Printf("Realy? Come on. Sorry, I have to exit\n")
+			return 0, fmt.Errorf("stupid user can't enter id")
+		}
+		fmt.Printf("Try again\n")
+		return c.auth(counter + 1)
 	}
 
 	return id, nil
