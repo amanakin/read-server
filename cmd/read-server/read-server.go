@@ -1,39 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"go.uber.org/zap"
-	"log"
-	"net"
+	"flag"
+	"github.com/amanakin/read-server/pkg/repo"
+	"github.com/amanakin/read-server/pkg/server"
+	log "github.com/sirupsen/logrus"
 )
 
-// TODO
-// add Zap
-// add middleware
-// add user repo
-// add user repo database
+var (
+	serverAddr     = flag.String("s", "localhost:8080", "address of the read-server")
+	filename       = flag.String("file", "file.txt", "file where will be written clients data")
+	maxConnections = flag.Int("max", 5, "max connections to server")
+)
 
 func main() {
-	fmt.Printf("starting session\n")
+	log.Infof("starting server")
 
-	ln, err := net.Listen("tcp", ":8080")
+	r, err := repo.NewRepo(*filename)
 	if err != nil {
-		log.Fatalf("session can't listen: %v", err)
+		log.Panicf("can't create repo: %v", err)
 	}
 
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Printf("ln close error: %v", err)
-		}
-	}(ln)
-
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			log.Printf("listener accept err: %v", err)
-			continue
-		}
-		go Handler(conn)
-	}
+	srv := server.NewServer(r, *maxConnections)
+	srv.RunListener(*serverAddr)
 }

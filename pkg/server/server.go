@@ -2,44 +2,87 @@ package server
 
 import (
 	"github.com/amanakin/read-server/pkg/repo"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
-	"strconv"
+	"time"
 )
 
 type Server struct {
+	ln             net.Listener
 	maxConnections int
-	repo           *repo.Repo
+	Repo           *repo.Repo
 }
 
 func NewServer(repo *repo.Repo, maxConnections int) *Server {
 	return &Server{
-		maxConnections: maxConn,
-		repo:           repo,
+		maxConnections: maxConnections,
+		Repo:           repo,
 	}
 }
 
-func (server *Server) ListenAndServe()
-
-func (server *Server) Start(port uint64) {
-	ln, err := net.Listen("tcp", ":"+strconv.FormatUint(port, 10))
-	if err != nil {
-		log.Fatalf("can't start server: %v", err)
+func (srv *Server) RunListener(addr string) {
+	var limiter chan struct{}
+	if srv.maxConnections > 0 {
+		limiter = make(chan struct{}, srv.maxConnections)
+	} else {
+		limiter = nil
 	}
 
-	defer func(ln net.Listener) {
-		err := ln.Close()
-		if err != nil {
-			log.Printf("listener close error: %v", err)
-		}
-	}(ln)
+	done := make(chan bool)
+	srv.listenAndServe(addr, limiter, done)
+	<-done
+}
+
+func (srv *Server) listenAndServe(addr string, limiter chan struct{}, done chan bool) {
+	defer func() { done <- true }()
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Panicf("listen server err: %v addr: %v", err, addr)
+	}
+
+	srv.serve(ln, limiter)
+}
+
+func (srv *Server) serve(ln net.Listener, limiter chan struct{}) {
+	defer srv.close()
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Printf("listener accept error: %v", err)
-			continue
+			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+				log.Warnf("server serve: accept temporary err: %v", err)
+				time.Sleep(time.Second)
+				continue
+			}
+			// Non-temporary error
+			log.Errorf("server serve: accept err: %v", err)
+			return
 		}
-		go Handler(conn)
+
+		sess := NewSession(srv, conn)
+
+		if limiter != nil {
+			go func() {
+				select {
+				case limiter <- struct{}{}:
+					sess.Serve()
+					<-limiter
+				default:
+					sess.Reject()
+				}
+			}()
+		} else {
+			go func() {
+				sess.Serve()
+			}()
+		}
+	}
+}
+
+func (srv *Server) close() {
+	err := srv.ln.Close()
+	if err != nil {
+		log.Errorf("server close: listener close err: %v", err)
 	}
 }
