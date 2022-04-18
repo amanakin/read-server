@@ -1,0 +1,27 @@
+
+0: `Hello from 0`
+1: `Hi from 1`
+0: `Hello`
+0: `How are you?`
+99: `He`
+10: `Hi`
+0: `Hello !`
+10: `Hello`
+10: `User`
+10: `I'm `
+10: `10`
+10: `Десятый`
+11: `Hi`
+11: `Hello`
+10: `Привет`
+10: `Как дела`
+10: `Hello`
+10: `How are you`
+10: `Hello`
+10: `User`
+10: `I'm`
+10: `10`
+10: `Привет`
+10: `Как дела`
+10: `Hello`
+10: `How are you`

@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
+	"net/url"
+	"os"
+
 	"github.com/amanakin/read-server/pkg/client"
 	log "github.com/sirupsen/logrus"
-	"os"
 )
 
 func main() {
